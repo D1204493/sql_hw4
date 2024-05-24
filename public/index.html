@@ -1,0 +1,266 @@
+<html>
+
+<head>
+  <title>Express</title>
+  <link rel="stylesheet" href="/stylesheets/style.css">
+  <script src="https://cdn.staticfile.org/vue/3.2.36/vue.global.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.4.0/Chart.min.js"></script>
+</head>
+
+<body>
+  <h1>Express</h1>
+  <p>Welcome to Express</p>
+
+  <!--  產生 可以輸入 日期 商品 價格 (provider, movie_name, quote) 的表單，不使用 action-->
+  <form>
+    <label for="date">Date:</label>
+    <input id="date" type="text" name="date" placeholder="date">
+    <label for="product">Product:</label>
+    <input id="product" type="text" name="product" placeholder="product">
+    <label for="price">Price:</label>
+    <input id="price" type="text" name="price" placeholder="price">
+    <button type="button" onclick="insertData()">Submit</button>
+  </form>
+
+
+  <!--  將上面表單的資料，透過 fetch async await 來發送 POST 請求到 /api/insert ，並在成功後，用 p 顯示伺服器回傳的【純文字】訊息，不是 json-->
+  <p id="result"></p>
+  <script>
+    async function insertData() {
+      const date = document.querySelector('input[name="date"]').value;
+      const product = document.querySelector('input[name="product"]').value;
+      const price = document.querySelector('input[name="price"]').value;
+
+      const response = await fetch('/api/insert', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ date, product, price })
+      });
+
+      const result = await response.text();
+      document.getElementById('result').innerText = result;
+    }
+  </script>
+
+
+  <!--  按下Fetch按鈕，將使用 fetch async await 抓取 http://localhost:3000/api/quotes 的 JSON ，JSON 包括 (id, date, product, price) 等欄位，用 Table 顯示，使用 vue3-->
+<!--  <button type="button" onclick="fetchData()">Fetch</button>-->
+<!--  <div id="app"></div>-->
+
+<!--  <script>-->
+<!--    async function fetchData() {-->
+<!--      const response = await fetch('/api/quotes');-->
+<!--      const quotes = await response.json();-->
+<!--      const app = Vue.createApp({-->
+<!--        data() {-->
+<!--          return { quotes };-->
+<!--        },-->
+<!--        template: `-->
+<!--                    <table>-->
+<!--                        <tr>-->
+<!--                            <th>ID</th>-->
+<!--                            <th>Date</th>-->
+<!--                            <th>Product</th>-->
+<!--                            <th>Price</th>-->
+<!--                        </tr>-->
+<!--                        <tr v-for="quote in quotes">-->
+<!--                            <td>{{ quote.id }}</td>-->
+<!--                            <td>{{ quote.date }}</td>-->
+<!--                            <td>{{ quote.product }}</td>-->
+<!--                            <td>{{ quote.price }}</td>-->
+<!--                        </tr>-->
+<!--                    </table>-->
+<!--                `-->
+<!--      });-->
+
+<!--      app.mount('#app');-->
+<!--    }-->
+<!--  </script>-->
+
+
+
+
+<!--vue3-->
+  <div class="container">
+    <div id="table-container">
+  <button type="button" onclick="fetchDataAndDisplayTable()">Fetch</button>
+  <div id="app"></div>
+    </div>
+
+    <div id="chart-container">
+    <h3>物價變化圖表3</h3>
+    <button id="loadChart">載入圖表</button>
+    <canvas id="priceChart" width="400" height="200" style="display:none;"></canvas>
+    </div>
+  </div>
+
+  <script>
+    async function fetchDataAndDisplayTable() {
+      const response = await fetch('/api/quotes');
+      const quotes = await response.json();
+      const app = Vue.createApp({
+        data() {
+          return { quotes };
+        },
+        template: `
+                    <table>
+                        <tr>
+                            <th>ID</th>
+                            <th>Date</th>
+                            <th>Product</th>
+                            <th>Price</th>
+                        </tr>
+                        <tr v-for="quote in quotes">
+                            <td>{{ quote.id }}</td>
+                            <td>{{ quote.date }}</td>
+                            <td>{{ quote.product }}</td>
+                            <td>{{ quote.price }}</td>
+                        </tr>
+                    </table>
+                `
+      });
+
+      app.mount('#app');
+    }
+
+
+
+
+    document.getElementById('loadChart').addEventListener('click', async () => {
+      const data = await fetchData();
+      generateChart(data);
+    });
+
+    async function fetchData() {
+      const response = await fetch('http://localhost:3000/api/quotes');
+      const data = await response.json();
+      return data;
+    }
+
+    function generateChart(data) {
+      const ctx = document.getElementById('priceChart').getContext('2d');
+      document.getElementById('priceChart').style.display = 'block';
+
+      const labels = data.map(item => item.date);
+      const prices = data.map(item => item.price);
+
+      new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: '價格',
+            data: prices,
+            borderColor: 'rgba(75, 192, 192, 1)',
+            borderWidth: 1
+          }]
+        },
+        options: {
+          scales: {
+            y: {
+              beginAtZero: true
+            }
+          }
+        }
+      });
+    }
+  </script>
+
+
+
+<!--  <h3>物價變化圖表</h3>-->
+<!--  <canvas id="priceChart" width="400" height="200"></canvas>-->
+
+<!--  <script>-->
+<!--    async function fetchData() {-->
+<!--      const response = await fetch('http://localhost:3000/api/quotes');-->
+<!--      const data = await response.json();-->
+<!--      return data;-->
+<!--    }-->
+
+<!--    function generateChart(data) {-->
+<!--      const ctx = document.getElementById('priceChart').getContext('2d');-->
+
+<!--      const labels = data.map(item => item.date);-->
+<!--      const prices = data.map(item => item.price);-->
+
+<!--      new Chart(ctx, {-->
+<!--        type: 'line',-->
+<!--        data: {-->
+<!--          labels: labels,-->
+<!--          datasets: [{-->
+<!--            label: '價格',-->
+<!--            data: prices,-->
+<!--            borderColor: 'rgba(75, 192, 192, 1)',-->
+<!--            borderWidth: 1-->
+<!--          }]-->
+<!--        },-->
+<!--        options: {-->
+<!--          scales: {-->
+<!--            y: {-->
+<!--              beginAtZero: true-->
+<!--            }-->
+<!--          }-->
+<!--        }-->
+<!--      });-->
+<!--    }-->
+
+<!--    fetchData().then(data => {-->
+<!--      generateChart(data);-->
+<!--    });-->
+<!--  </script>-->
+
+
+<!--  <h3>物價變化圖表2</h3>-->
+<!--  <button id="loadChart">載入圖表</button>-->
+<!--  <canvas id="priceChart" width="400" height="200" style="display:none;"></canvas>-->
+
+<!--  <script>-->
+<!--    document.getElementById('loadChart').addEventListener('click', async () => {-->
+<!--      const data = await fetchData();-->
+<!--      generateChart(data);-->
+<!--    });-->
+
+<!--    async function fetchData() {-->
+<!--      const response = await fetch('http://localhost:3000/api/quotes');-->
+<!--      const data = await response.json();-->
+<!--      return data;-->
+<!--    }-->
+
+<!--    function generateChart(data) {-->
+<!--      const ctx = document.getElementById('priceChart').getContext('2d');-->
+<!--      document.getElementById('priceChart').style.display = 'block';-->
+
+<!--      const labels = data.map(item => item.date);-->
+<!--      const prices = data.map(item => item.price);-->
+
+<!--      new Chart(ctx, {-->
+<!--        type: 'line',-->
+<!--        data: {-->
+<!--          labels: labels,-->
+<!--          datasets: [{-->
+<!--            label: '價格',-->
+<!--            data: prices,-->
+<!--            borderColor: 'rgba(75, 192, 192, 1)',-->
+<!--            borderWidth: 1-->
+<!--          }]-->
+<!--        },-->
+<!--        options: {-->
+<!--          scales: {-->
+<!--            y: {-->
+<!--              beginAtZero: true-->
+<!--            }-->
+<!--          }-->
+<!--        }-->
+<!--      });-->
+<!--    }-->
+<!--  </script>-->
+
+
+
+
+</body>
+
+</html>
